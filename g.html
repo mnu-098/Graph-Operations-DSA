@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Graph Operations in DSA</title>
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+    #network { width: 1000px; height: 600px; border: 2px solid #333; margin: auto; }
+    .controls { margin: 15px; }
+    input, button { margin: 5px; padding: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Graph Operations in DSA (Interactive)</h1>
+  
+  <div id="network"></div>
+
+  <div class="controls">
+    <h3>Graph Operations</h3>
+    <input type="number" id="nodeId" placeholder="Node ID">
+    <button onclick="addNode()">Add Node</button>
+    <button onclick="removeNode()">Remove Node</button>
+    <br>
+    <input type="number" id="edgeFrom" placeholder="From">
+    <input type="number" id="edgeTo" placeholder="To">
+    <button onclick="addEdge()">Add Edge</button>
+    <button onclick="removeEdge()">Remove Edge</button>
+    <br><br>
+    <button onclick="startBFS()">Run BFS</button>
+    <button onclick="startDFS()">Run DFS</button>
+  </div>
+
+  <script>
+    // Graph Data
+    const nodes = new vis.DataSet([]);
+    const edges = new vis.DataSet([]);
+    const container = document.getElementById("network");
+    const data = { nodes, edges };
+    const options = { physics: true };
+    const network = new vis.Network(container, data, options);
+
+    // Adjacency list
+    const graph = {};
+
+    // Add Node
+    function addNode() {
+      const nodeId = parseInt(document.getElementById("nodeId").value);
+      if (!nodeId || nodes.get(nodeId)) return alert("Invalid or existing node!");
+      nodes.add({ id: nodeId, label: String(nodeId) });
+      graph[nodeId] = [];
+    }
+
+    // Remove Node
+    function removeNode() {
+      const nodeId = parseInt(document.getElementById("nodeId").value);
+      if (!nodes.get(nodeId)) return alert("Node not found!");
+      nodes.remove({ id: nodeId });
+      delete graph[nodeId];
+      for (let key in graph) {
+        graph[key] = graph[key].filter(n => n !== nodeId);
+      }
+    }
+
+    // Add Edge
+    function addEdge() {
+      const from = parseInt(document.getElementById("edgeFrom").value);
+      const to = parseInt(document.getElementById("edgeTo").value);
+      if (!nodes.get(from) || !nodes.get(to)) return alert("Nodes must exist!");
+      edges.add({ from, to });
+      if (!graph[from]) graph[from] = [];
+      graph[from].push(to);
+    }
+
+    // Remove Edge
+    function removeEdge() {
+      const from = parseInt(document.getElementById("edgeFrom").value);
+      const to = parseInt(document.getElementById("edgeTo").value);
+      const edge = edges.get().find(e => e.from === from && e.to === to);
+      if (edge) edges.remove({ id: edge.id });
+      if (graph[from]) graph[from] = graph[from].filter(n => n !== to);
+    }
+
+    // BFS Traversal
+    function startBFS() {
+      if (nodes.length === 0) return alert("Add nodes first!");
+      let visited = new Set();
+      let queue = [nodes.get()[0].id]; // start from first node
+      let delay = 0;
+
+      function bfsStep(node) {
+        if (!visited.has(node)) {
+          visited.add(node);
+          nodes.update({ id: node, color: { background: "orange" } });
+          (graph[node] || []).forEach(nei => { if (!visited.has(nei)) queue.push(nei); });
+        }
+        if (queue.length > 0) {
+          setTimeout(() => bfsStep(queue.shift()), 1000);
+        }
+      }
+      bfsStep(queue.shift());
+    }
+
+    // DFS Traversal
+    function startDFS() {
+      if (nodes.length === 0) return alert("Add nodes first!");
+      let visited = new Set();
+
+      function dfsStep(node) {
+        if (!visited.has(node)) {
+          visited.add(node);
+          nodes.update({ id: node, color: { background: "lightgreen" } });
+          let neighbors = graph[node] || [];
+          neighbors.forEach((nei, idx) => {
+            setTimeout(() => dfsStep(nei), 1000 * (idx + 1));
+          });
+        }
+      }
+      dfsStep(nodes.get()[0].id); // start from first node
+    }
+  </script>
+</body>
+</html>
